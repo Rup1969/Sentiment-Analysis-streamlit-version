@@ -64,7 +64,7 @@ if st.button("GENERATE REPORT", type="primary"):
             # Pull probabilities from logits via sigmoid activation
             probs = torch.sigmoid(outputs.logits).numpy()[0]
         
-        st.markdown("### 2. Analysis Results")
+       st.markdown("### 2. Analysis Results")
         
         detected_emotions = []
         text_lower = text.lower()
@@ -76,7 +76,8 @@ if st.button("GENERATE REPORT", type="primary"):
             "hungry": {"fear": 0.40}
         }
         
-        # Display spectrum breakdown using Streamlit progress bars
+        # 1. Gather and calculate all adjusted scores first
+        score_list = []
         for i, label in enumerate(LABELS):
             score = float(probs[i])
             
@@ -85,6 +86,13 @@ if st.button("GENERATE REPORT", type="primary"):
                 if word in text_lower and label in penalty_map:
                     score = max(0.0, score - penalty_map[label])
             
+            score_list.append((label, score))
+            
+        # 2. Sort the list by score in descending order (highest first)
+        score_list.sort(key=lambda x: x[1], reverse=True)
+        
+        # 3. Display the sorted results
+        for label, score in score_list:
             # Render individual emotion progress metric
             st.write(f"**{label.upper()}** ({score * 100:.1f}%)")
             st.progress(score)
@@ -100,8 +108,7 @@ if st.button("GENERATE REPORT", type="primary"):
             st.info("😐 **Verdict:** No strong classification-level emotion detected.")
         else:
             verdict_string = " + ".join([f"**{e}**" for e in detected_emotions])
-            st.success(f"📊 **Primary Markers Detected:** {verdict_string}")
-            
+            st.success(f"📊 **Primary Markers Detected:** {verdict_string}")            
 st.markdown(
     "<div style='text-align:center; color:#9ca3af; margin-top:30px; font-size:0.8em;'>Secure Cloud Deployment • Framework: Streamlit</div>", 
     unsafe_allow_html=True
